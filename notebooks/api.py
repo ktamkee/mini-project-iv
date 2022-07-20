@@ -4,27 +4,36 @@ import pandas as pd
 import numpy
 import pickle
 
-app = Flask(midterm_project_iv)
+app = Flask(__name__)
 api = Api(app)
 
-class RawFeats:
-    def __init__(self, feats):
-        self.feats = feats
+class DataframeFunctionTransformer:
+    def __init__(self, func):
+        self.func = func
 
-    def fit(self, X, y=None):
-        pass
+    def transform(self, input_df, **transform_params):
+        return self.func(input_df)
 
-        def transform(self, X, y=None):
-        return X[self.feats]
+    def fit(self, X, y=None, **fit_params):
+        return self
 
-    def fit_transform(self, X, y=None):
-        self.fit(X)
-        return self.transform(X)
+def create_total_income_feature(input_df):
+    input_df['TotalIncome'] = input_df['ApplicantIncome'] + input_df['CoapplicantIncome']
+    return input_df
 
-feats = ['alcohol','malic_acid','ash','alcalinity_of_ash','magnesium',
-         'total_phenols','flavanoids','nonflavanoid_phenols'
+def to_dataframe(array):
+    columns= ['Gender','Dependents','Married','Self_Employed', 'LoanAmount',
+               'Loan_Amount_Term','Credit_History','Education','ApplicantIncome',
+               'CoapplicantIncome','Property_Area', 'TotalIncome']
+    
+    return pd.DataFrame(array, columns = columns)
+    
+    return pd.DataFrame(array, columns = columns)
 
-raw_feats = RawFeats(feats)
+def log_object(input_df):
+    input_df['LoanAmount'] = np.log(input_df['LoanAmount'])
+    input_df['TotalIncome'] = np.log(input_df['TotalIncome'])
+    return input_df
 
 model = pickle.load( open( "model.p", "rb" ) )
 
@@ -38,5 +47,5 @@ class Scoring(Resource):
 api.add_resource(Scoring, '/scoring')
 
 
-if midterm_project_iv == '__main__':
+if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
